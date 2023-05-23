@@ -52,10 +52,7 @@ class Information:
 
         data = {'corp_name': response['corp_name'], 'ceo_name': response['ceo_nm'], 'corp_addr': response['adres'],
                 'corp_homepage': response['hm_url'], 'phone_number': response['phn_no'], 'est_date': response['est_dt']}
-
-        json_data = json.dumps(data, ensure_ascii=False)
-
-        return json_data
+        return data
 
     def get_corp_finance(self, name, appkey=None):
         if appkey is None:
@@ -80,23 +77,43 @@ class Information:
 
         data = {'sales_revenue': f'{sales_revenue / 100000000:.1f} 억',
                 'operating_profit': f'{operating_profit / 100000000:.1f} 억'}
-
-        json_data = json.dumps(data, ensure_ascii=False)
-        return json_data
+        return data
 
 
 @api_view(['GET'])
-def update_stock_info(request):
+def update_corp_info(request, name):
     if request.method == 'GET':
-        name = request.GET.get('corp_name')
         info = Information()
         corp_info = info.get_corp_information(name, info.appkey)
         corp_fin = info.get_corp_finance(name, info.appkey)
     try:
-
+        corporation = Corporation.objects.get(corp_name=name)
+        corporation.ceo_name = corp_info['ceo_name']
+        corporation.corp_addr = corp_info['corp_addr']
+        corporation.corp_homepage = corp_info['corp_homepage']
+        corporation.phone_number = corp_info['phone_number']
+        corporation.est_date = corp_info['est_date']
+        corporation.sales_revenue = corp_fin['sales_revenue']
+        corporation.operating_profit = corp_fin['operating_profit']
+        corporation.save()  # Save the changes
 
         return Response({'message': '주식 정보가 업데이트되었습니다.'}, status=200)
 
-    except requests.exceptions.RequestException as e:
-        return Response({'message': f'API 요청에 실패했습니다: {str(e)}'}, status=500)
+    except Corporation.DoesNotExist:
+
+        corporation = Corporation(
+            corp_name=name,
+            ceo_name=corp_info['ceo_name'],
+            corp_addr=corp_info['corp_addr'],
+            corp_homepage=corp_info['corp_homepage'],
+            phone_number=corp_info['phone_number'],
+            est_date=corp_info['est_date'],
+            sales_revenue=corp_fin['sales_revenue'],
+            operating_profit=corp_fin['operating_profit']
+        )
+        corporation.save()
+
+        return Response({'message': '주식 정보가 업데이트되었습니다.'}, status=200)
+
+
 
