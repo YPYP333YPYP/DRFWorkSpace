@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 import logging
 from django.core.wsgi import get_wsgi_application
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -12,6 +13,7 @@ sys.path.append(BASE_DIR)
 
 # scheduler.log 파일에 로그 데이터 저장
 logging.basicConfig(filename='scheduler.log', level=logging.INFO)
+
 
 # 일주일에 한번씩 기업 정보 저장
 def schedule_update_corp_info():
@@ -30,7 +32,7 @@ def schedule_update_corp_info():
             corporation.est_date = corp_info['est_date']
             corporation.sales_revenue = corp_fin['sales_revenue']
             corporation.operating_profit = corp_fin['operating_profit']
-            corporation.save()  # Save the changes
+            corporation.save()
 
         except Corporation.DoesNotExist:
 
@@ -51,6 +53,7 @@ def schedule_update_corp_info():
 # 스케줄러 작동 테스트
 # schedule_update_corp_info()
 
+# 스케줄러 작동
 scheduler = BackgroundScheduler()
 scheduler.add_job(schedule_update_corp_info, "interval", weeks=1)
 scheduler.start()

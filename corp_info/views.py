@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from rest_framework import generics
-from .serializers import CorporationSerializer
+from rest_framework.exceptions import NotFound
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from .serializers import CorporationSerializer
 from .models import Corporation
 from .information import Information
 
@@ -12,8 +13,11 @@ from .information import Information
 def update_corp_info(request, name):
     if request.method == 'GET':
         info = Information()
-        corp_info = info.get_corp_information(name, info.appkey)
-        corp_fin = info.get_corp_finance(name, info.appkey)
+        try:
+            corp_info = info.get_corp_information(name, info.appkey)
+            corp_fin = info.get_corp_finance(name, info.appkey)
+        except ValueError:
+            raise NotFound("정상적이지 않은 값이 입력되었습니다.")
     try:
         corporation = Corporation.objects.get(corp_name=name)
         corporation.ceo_name = corp_info['ceo_name']
@@ -23,9 +27,9 @@ def update_corp_info(request, name):
         corporation.est_date = corp_info['est_date']
         corporation.sales_revenue = corp_fin['sales_revenue']
         corporation.operating_profit = corp_fin['operating_profit']
-        corporation.save()  # Save the changes
+        corporation.save()
 
-        return Response({'message': '주식 정보가 업데이트되었습니다.'}, status=200)
+        return Response({'message': '기업 정보가 업데이트되었습니다.'}, status=200)
 
     except Corporation.DoesNotExist:
 
@@ -41,7 +45,8 @@ def update_corp_info(request, name):
         )
         corporation.save()
 
-        return Response({'message': '주식 정보가 업데이트되었습니다.'}, status=200)
+        return Response({'message': '기업 정보가 업데이트되었습니다.'}, status=200)
+
 
 # 기업 정보를 조회할 수 있는 GET API
 class CorporationDetailAPIView(generics.RetrieveAPIView):
@@ -49,3 +54,11 @@ class CorporationDetailAPIView(generics.RetrieveAPIView):
     serializer_class = CorporationSerializer
     lookup_field = 'corp_name'
 
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        corp_name = self.kwargs['corp_name']
+        try:
+            obj = queryset.get(corp_name=corp_name)
+            return obj
+        except Corporation.DoesNotExist:
+            raise NotFound('일치하는 기업이 없습니다.')
