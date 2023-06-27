@@ -1,10 +1,10 @@
-from django.shortcuts import render
-from rest_framework import generics
+from django.shortcuts import render, get_object_or_404
+from rest_framework import generics, viewsets
 from rest_framework.exceptions import NotFound
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
-from .serializers import CorporationSerializer
-from .models import Corporation
+from .serializers import CorporationSerializer, SmartLogisticsSerializer
+from .models import Corporation, SmartLogistics
 from .information import Information
 
 
@@ -62,3 +62,21 @@ class CorporationDetailAPIView(generics.RetrieveAPIView):
             return obj
         except Corporation.DoesNotExist:
             raise NotFound('일치하는 기업이 없습니다.')
+
+
+class SmartLogisticsViewSet(viewsets.ModelViewSet):
+    serializer_class = SmartLogisticsSerializer
+    queryset = SmartLogistics.objects.all()
+    lookup_field = 'port_name'
+
+    def get_queryset(self):
+        port_name = self.kwargs['port_name']
+        queryset = SmartLogistics.objects.filter(port_name=port_name)
+        return queryset
+
+    @action(detail=False, methods=['get'], url_path='<str:port_name>/')
+    def get_by_port_name(self, request, port_name=None):
+        queryset = self.get_queryset()
+        instance = get_object_or_404(queryset, port_name=port_name)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)

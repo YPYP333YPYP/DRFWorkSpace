@@ -13,3 +13,21 @@ class Corporation(models.Model):
 
     def __str__(self):
         return f'{self.corp_name}'
+
+class Technology(models.Model):
+    tech_name = models.CharField(max_length=100)
+    description = models.CharField(max_length=10000)
+
+    def __str__(self):
+        return self.tech_name
+
+
+class SmartLogistics(models.Model):
+    port_name = models.CharField(max_length=100)
+    technology = models.ForeignKey(Technology, null=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.port_name
+
+
+
