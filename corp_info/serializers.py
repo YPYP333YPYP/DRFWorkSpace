@@ -1,5 +1,6 @@
+
 from rest_framework import serializers
-from .models import Corporation, SmartLogistics, Technology
+from .models import Corporation, SmartLogistics, Technology, Recruitment
 
 
 class CorporationSerializer(serializers.ModelSerializer):
@@ -19,4 +20,10 @@ class SmartLogisticsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SmartLogistics
+        fields = '__all__'
+
+
+class RecruitmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recruitment
         fields = '__all__'
